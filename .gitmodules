@@ -1,0 +1,4 @@
+[submodule "pullrequest_ui"]
+	path = pullrequest_ui
+	url = ../common-pullrequest-ui.git
+	branch = dist/master

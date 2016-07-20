@@ -1,0 +1,7 @@
+.create.sh*
+logs
+repositories
+ssh-git
+*.pyc
+*.log
+htpasswd

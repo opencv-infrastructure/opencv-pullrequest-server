@@ -1,0 +1,37 @@
+{
+  "repositories":
+  [
+    {
+      "id": "opencv",
+      "name": "GitHub OpenCV repo",
+      "merge_service":
+      {
+        "url": "/api/"
+      },
+      "info_services":
+      [
+        {
+          "id": "Main Buildbot",
+          "url": "/buildbot/",
+          "url_pullrequests": "pullrequests_gh/"
+        }
+      ]
+    },
+    {
+      "id": "contrib",
+      "name": "GitHub OpenCV Contrib repo",
+      "merge_service":
+      {
+        "url": "/api/"
+      },
+      "info_services":
+      [
+        {
+          "id": "Main Buildbot",
+          "url": "/buildbot/",
+          "url_pullrequests": "pullrequests_gh_contrib/"
+        }
+      ]
+    }
+  ]
+}

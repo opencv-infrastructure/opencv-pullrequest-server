@@ -1,0 +1,45 @@
+{
+  "userAgent": "Merge PullRequest App v0.1",
+  "githubAccessToken": "{{ env.GITHUB_APIKEY }}",
+  "repositories":
+  {
+    "opencv":
+    {
+      "type": "GitHub",
+      "path": "/opt/pullrequest/repositories/opencv",
+      "github" : "opencv/opencv",
+      "extra_path": "/opt/pullrequest/repositories/opencv_extra",
+      "extra_github" : "opencv/opencv_extra",
+      "checklist":
+      {
+        "main":
+        {
+          "requiredlist": [ "Linux x64", "Win7 x64 VS2013", "Mac", "Android armeabi-v7a", "Docs", "OpenCL", "Linux x64 Debug", "iOS", "Win10 x64 VS2015" ],
+          "optionalrunlist": [ "Win32", "ARMv7", "ARMv8", "iOS", "Android pack" ],
+          "url": "{{ env.BUILDBOT_URL }}/pullrequests_gh/{prId}/status",
+          "url_all": "{{ env.BUILDBOT_URL }}/pullrequests_gh/status"
+        }
+      },
+      "merge_script": "merge_from_github.sh"
+    },
+    "contrib":
+    {
+      "type": "GitHub",
+      "path": "/opt/pullrequest/repositories/opencv_contrib",
+      "github" : "opencv/opencv_contrib",
+      "extra_path": "/opt/pullrequest/repositories/opencv_extra",
+      "extra_github" : "opencv/opencv_extra",
+      "checklist":
+      {
+        "main":
+        {
+          "requiredlist": [ "Linux x64", "Win7 x64 VS2013", "Mac", "Android armeabi-v7a", "Docs", "Win10 x64 VS2015" ],
+          "optionalrunlist": [ "Win32", "ARMv7", "ARMv8", "iOS", "Android pack", "OpenCL", "Linux x64 Debug" ],
+          "url": "{{ env.BUILDBOT_URL }}/pullrequests_gh_contrib/{prId}/status",
+          "url_all": "{{ env.BUILDBOT_URL }}/pullrequests_gh_contrib/status"
+        }
+      },
+      "merge_script": "merge_from_github.sh"
+    }
+  }
+}

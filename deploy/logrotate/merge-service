@@ -1,0 +1,9 @@
+/opt/pullrequest/logs/merge-service.log {
+	daily
+	rotate 70
+	copytruncate
+	compress
+	nodelaycompress
+	ifempty
+	dateext
+}
