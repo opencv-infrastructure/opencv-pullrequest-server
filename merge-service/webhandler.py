@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import base64
 import cgi
 import mimetypes
@@ -68,14 +70,14 @@ class Handler(BaseHTTPRequestHandler):
         if not BaseHTTPRequestHandler.parse_request(self):
             return False
 
-        authorization = self.headers.get('Authorization', '')
-        if authorization:
-            scheme, credentials = authorization.split()
+        header = self.headers.get('Authorization', '')
+        if header:
+            scheme, data = header.split()
             if scheme != 'Basic':
                 self.send_error(501)
                 return False
-            credentials = base64.decodestring(credentials)
-            user, pw = credentials.split(':', 2)
+            data = base64.decodestring(data)
+            user, pw = data.split(':', 2)
             if self.get_userinfo(user, pw, self.command):
                 return True
             else:
@@ -89,7 +91,6 @@ class Handler(BaseHTTPRequestHandler):
 
 
     def get_userinfo(self, user, pw, command=''):
-        print(user, '*pwd*', command)
         try:
             lines = getHTPASSWD(os.path.join(os.path.dirname(__file__), '../htpasswd'))
             lines = [l for l in lines if l[0] == user]
@@ -102,12 +103,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.user = user
                 self.userComment = l[2] if len(l) > 2 else None
                 self.userRights = l[3].split(",") if len(l) > 3 else []
-            else:
-                print 'Invalid password: user="%s"' % user
             return res
         except:
-            print traceback.format_exc()
-            print sys.exc_info()[0]
+            print(traceback.format_exc())
+            print(sys.exc_info()[0])
             return False
 
     def send_autherror(self, code, message=None):
@@ -125,7 +124,7 @@ the credentials required.<P>
 </BODY></HTML>"""
         self.log_error("code %d, message: %s", code, message)
         self.send_response(code, message)
-        self.send_header("WWW-Authenticate", "Basic realm=\"%s\"" % message)
+        self.send_header("WWW-Authenticate", 'Basic realm="OpenCV CI"')
         self.send_header("Content-Type", 'text/html')
         self.end_headers()
 
@@ -136,21 +135,6 @@ the credentials required.<P>
     def do_GET(self):
         urlparts = urlparse.urlparse(self.path)
         pprint(urlparts)
-
-        if not urlparts.query and urlparts.path != '/':
-            fpath = urlparts.path
-            if fpath[0] == '/':
-                fpath = fpath[1:]
-            fpath = os.path.join(os.curdir + '/htdocs/', fpath)
-            if os.path.isfile(fpath):
-                ctype = get_ctype(fpath)
-                print ctype
-                with open(fpath, 'rb') as source:
-                    self.send_response(200)
-                    self.send_header("Content-type", ctype)
-                    self.end_headers()
-                    shutil.copyfileobj(source, self.wfile)
-                return
 
         result = None
         resultCode = 200
@@ -166,8 +150,8 @@ the credentials required.<P>
             resultCode = r.status
             result = r.message
         except:
-            print traceback.format_exc()
-            print sys.exc_info()[0]
+            print(traceback.format_exc())
+            print(sys.exc_info()[0])
             self.send_response(500)
             self.end_headers()
             return
@@ -223,8 +207,8 @@ the credentials required.<P>
             resultCode = r.status
             result = r.message
         except:
-            print traceback.format_exc()
-            print sys.exc_info()[0]
+            print(traceback.format_exc())
+            print(sys.exc_info()[0])
             self.send_response(500)
             self.end_headers()
             return
