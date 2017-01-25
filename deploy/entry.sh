@@ -3,12 +3,12 @@ echo "Starting pullrequest container..."
 
 . /deploy/profile.sh
 
-if [ -f /deploy/.prepare_done_ignore ]; then
+if [ -f /.prepare_done ]; then
   echo "Preparation step is already completed. Remove deploy/.prepare_done to run it again"
 else
   . /deploy/prepare_root.sh || exit 1
   su - $APPUSER -c /deploy/prepare.sh || exit 1
-  su - $APPUSER -c "touch /deploy/.prepare_done"
+  touch /.prepare_done
 fi
 
 execute cron

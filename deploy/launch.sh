@@ -2,6 +2,10 @@
 
 . /deploy/profile.sh
 
+if [ -n "$http_proxy" ]; then
+  git config --global http.proxy $http_proxy
+fi
+
 git config --global user.email "pullrequest@service"
 git config --global user.name "pullrequest"
 

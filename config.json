@@ -14,8 +14,24 @@
       {
         "main":
         {
-          "requiredlist": [ "Linux x64", "Win7 x64 VS2013", "Mac", "Android armeabi-v7a", "Docs", "OpenCL", "Linux x64 Debug", "iOS", "Win10 x64 VS2015" ],
-          "optionalrunlist": [ "Win32", "ARMv7", "ARMv8", "iOS", "Android pack" ],
+          "requiredlist": [
+              "Linux x64",
+              "Win64",
+              "Mac",
+              "Android armeabi-v7a",
+              "Docs",
+              "Linux OpenCL",
+              "Win64 OpenCL",
+              "Linux x64 Debug",
+              "iOS"
+          ],
+          "optionalrunlist": [
+              "Win32",
+              "ARMv7",
+              "ARMv8",
+              "Android pack",
+              "CUDA"
+          ],
           "url": "{{ env.BUILDBOT_URL }}/pullrequests_gh/{prId}/status",
           "url_all": "{{ env.BUILDBOT_URL }}/pullrequests_gh/status"
         }
@@ -33,8 +49,23 @@
       {
         "main":
         {
-          "requiredlist": [ "Linux x64", "Win7 x64 VS2013", "Mac", "Android armeabi-v7a", "Docs", "Win10 x64 VS2015" ],
-          "optionalrunlist": [ "Win32", "ARMv7", "ARMv8", "iOS", "Android pack", "OpenCL", "Linux x64 Debug" ],
+          "requiredlist": [
+              "Linux x64",
+              "Win64",
+              "Mac",
+              "Android armeabi-v7a",
+              "Docs",
+              "iOS"
+          ],
+          "optionalrunlist": [
+              "Linux OpenCL",
+              "Win64 OpenCL",
+              "Win32",
+              "ARMv7",
+              "ARMv8",
+              "Android pack",
+              "CUDA"
+          ],
           "url": "{{ env.BUILDBOT_URL }}/pullrequests_gh_contrib/{prId}/status",
           "url_all": "{{ env.BUILDBOT_URL }}/pullrequests_gh_contrib/status"
         }

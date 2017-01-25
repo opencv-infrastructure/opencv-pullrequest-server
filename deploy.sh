@@ -47,7 +47,7 @@ add_volume() {
   OPTS="\$OPTS -v \${P}/\$1:/opt/pullrequest/\$1"
 }
 
-for i in merge-service pullrequest_ui www config.json htpasswd; do
+for i in merge-service pullrequest_ui www config.json; do
   add_volume \$i;
 done
 
@@ -58,10 +58,11 @@ create_container() {
     \$OPTS \\
     -p \$HTTP_PORT:80 \\
     -v \${P}/deploy:/deploy \\
-    -v \${P}/ssh-git:/opt/pullrequest/.ssh \\
+    -v \${P}/credentials/ssh-git:/opt/pullrequest/.ssh \\
     -v \${P}/logs/merge:/opt/pullrequest/logs \\
     -v \${P}/logs/nginx:/var/log/nginx \\
     -v \${P}/repositories:/opt/pullrequest/repositories \\
+    -v \${P}/credentials/htpasswd:/opt/pullrequest/htpasswd:ro \
     \${IMAGE}
 }
 EOF

@@ -30,8 +30,9 @@ update_repo() {
 }
 
 # Note: github.com-push is defined in ~/.ssh/config
-update_repo opencv https://github.com/opencv/opencv.git ssh://github.com-push/opencv/opencv.git git://code.ocv/opencv.git
-update_repo opencv_extra https://github.com/opencv/opencv_extra.git ssh://github.com-push/opencv/opencv_extra.git git://code.ocv/opencv_extra.git
-update_repo opencv_contrib https://github.com/opencv/opencv_contrib.git ssh://github.com-push/opencv/opencv_contrib.git git://code.ocv/opencv_contrib.git
+OPENCV_GIT_URL=${OPENCV_GIT_URL:-https://github.com/opencv}
+update_repo opencv https://github.com/opencv/opencv.git ssh://github.com-push/opencv/opencv.git ${OPENCV_GIT_URL}/opencv.git
+update_repo opencv_extra https://github.com/opencv/opencv_extra.git ssh://github.com-push/opencv/opencv_extra.git ${OPENCV_GIT_URL}/opencv_extra.git
+update_repo opencv_contrib https://github.com/opencv/opencv_contrib.git ssh://github.com-push/opencv/opencv_contrib.git ${OPENCV_GIT_URL}/opencv_contrib.git
 
 ) || error_exit "FATAL: Can't update repositories"
