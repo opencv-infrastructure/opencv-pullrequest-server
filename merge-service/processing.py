@@ -20,10 +20,12 @@ class Repository():
             self.prId = prId
             self.assignee = None
             self.lastApproval = None
+            self.lastApprovalReviews = None
             # GitHub API objects
             cfg = getConfig()
             self.apiClientPullrequest = GitHub(userAgent=cfg['userAgent'], reuseETag=True, access_token=cfg['githubAccessToken'])
             self.apiClientComments = GitHub(userAgent=cfg['userAgent'], reuseETag=True, access_token=cfg['githubAccessToken'])
+            self.apiClientReviews = GitHub(userAgent=cfg['userAgent'], reuseETag=True, access_token=cfg['githubAccessToken'])
             self.apiClientExtraBranch = GitHub(userAgent=cfg['userAgent'], reuseETag=True, access_token=cfg['githubAccessToken'])
             self.apiClientExtraPullRequest = GitHub(userAgent=cfg['userAgent'], reuseETag=True, access_token=cfg['githubAccessToken'])
             self.extra = None
@@ -34,7 +36,7 @@ class Repository():
                 apiClient = self.apiClientPullrequest
                 info = apiClient.repos(self.repo.cfg['github']).pulls(self.prId).get()
                 if apiClient.status == 304:
-                    print('Pullrequest #%s is not changed, previous result was: %s ...' % (self.prId, self.lastApproval))
+                    print('Pullrequest #%s is not changed, previous result was: %s ...' % (self.prId, self.lastApproval or self.lastApprovalReviews))
                     info = self.info
                 self.info = info
                 self.head_user = self.info['head']['repo']['owner']['login']
@@ -72,28 +74,46 @@ class Repository():
                 if self.assignee is None:
                     print('Pullrequest #%s is not assigned ...' % self.prId)
                     self.lastApproval = False
-                    return self.lastApproval
+                    self.lastApprovalReviews = False
+                    return False
                 # Scan last updated comments
                 apiClient = self.apiClientComments
                 info = apiClient.repos(self.repo.cfg['github']).issues(self.prId).comments.get(sort='updated', direction='desc')
                 if apiClient.status == 304:
-                    print('Pullrequest #%s comments are not changed, return previous result: %s ...' % (self.prId, self.lastApproval))
-                    print('Extra=%s' % self.extra)
-                    return self.lastApproval
-                # May be check only last updated comment ?
-                for comment in info:
-                    if comment["user"]["login"] == self.assignee:
-                        if ':shipit:' in comment["body"] or ':+1:' in comment["body"]:
-                            print('Pullrequest #%s is approved ...' % self.prId)
-                            self.lastApproval = True
-                            return self.lastApproval
+                    print('Pullrequest #%s comments are not changed, use previous result: %s ...' % (self.prId, self.lastApproval))
+                elif apiClient.status == 200:
+                    # May be check only last updated comment ?
+                    for comment in info:
+                        if comment["user"]["login"] == self.assignee:
+                            if ':shipit:' in comment["body"] or ':+1:' in comment["body"]:
+                                print('Pullrequest #%s is approved via comments ...' % self.prId)
+                                self.lastApproval = True
+                                break
+                if self.lastApproval:
+                    return True
+
+                apiClient = self.apiClientReviews
+                info = apiClient.repos(self.repo.cfg['github']).pulls(self.prId).reviews.get()
+                if apiClient.status == 304:
+                    print('Pullrequest #%s reviews are not changed, use previous result: %s ...' % (self.prId, self.lastApprovalReviews))
+                    lastApproval = self.lastApprovalReviews
+                elif apiClient.status == 200:
+                    for review in info:
+                        if review["user"]["login"] == self.assignee:
+                            if review["state"] == 'APPROVED':
+                                print('Pullrequest #%s is approved via reviews ...' % self.prId)
+                                self.lastApprovalReviews = True
+                                break
+                if self.lastApprovalReviews:
+                    return True
+
                 print('Pullrequest #%s is not approved ...' % self.prId)
-                self.lastApproval = False
-                return self.lastApproval
+                return False
             except:
                 traceback.print_exc()
                 self.info = None
                 self.lastApproval = False
+                self.lastApprovalReviews = False
                 return False
 
         @CacheFunction(10, initialCleanupThreshold=256)
