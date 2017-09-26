@@ -1,6 +1,7 @@
 from os.path import os, stat
 import collections
 import json
+import re
 import time
 import urllib2
 
@@ -76,4 +77,38 @@ def fetchUrl(url):
 
 def str2bool(v):
   return str(v).lower() in ("yes", "true", "on", "1")
-  
+
+
+class ParameterExtractor(object):
+    def __init__(self, context):
+        self.context = context
+        pass
+
+    def validateParameterValue(self, v):
+        if re.search(r'\\[^a-zA-Z0-9_]', v):
+            raise ValueError('Parameter check failed (escape rule): "%s"' % v)
+        for s in v:
+            if not s.isdigit() and not s.isalpha() and s != ',' and s != '-' and s != '_' and s != ':' and s != '.' and s != '*' and s != '\\'  and s != '/':
+                raise ValueError('Parameter check failed: "%s"' % v)
+
+    def validateParameter(self, name, value):
+        try:
+            self.validateParameterValue(value)
+        except ValueError as e:
+            raise ValueError('Parameter "%s"="%s": %s' % (name, value, re.sub('^Parameter ', '', str(e))))
+        return value
+
+    def extractParameterEx(self, nameFilter, validationFn=None):
+        if not self.context:
+            return None
+        if re.search(nameFilter + r'=', self.context):
+            m = re.search(r'(^|`|\n|\r)(?P<name>' + nameFilter + r')=(?P<value>[^\r\n\t\s`]*)(\r|\n|`|$)', self.context)
+            if m:
+                name = m.group('name')
+                value = m.group('value')
+                if validationFn is None:
+                    value = self.validateParameter(name, value)
+                else:
+                    value = validationFn(name, value)
+                return (name, value)
+        return None

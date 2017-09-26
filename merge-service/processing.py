@@ -2,7 +2,7 @@
 import subprocess
 
 from config import getConfig
-from utils import HTTPResponse, CacheFunction, fetchUrl, str2bool
+from utils import HTTPResponse, CacheFunction, fetchUrl, str2bool, ParameterExtractor
 import traceback
 from github import GitHub
 from urllib2 import HTTPError
@@ -44,11 +44,15 @@ class Repository():
                     if self.head_branch in ['master', '2.4']:
                         self.extra = False
                     else:
-                        print('Query extra branch: %s/%s %s ...' % (self.head_user, 'opencv_extra', self.head_branch))
+                        extra_branch_parameter = ParameterExtractor(self.info['body'] or '').extractParameterEx('opencv_extra')
+                        extra_branch_name = self.head_branch
+                        if extra_branch_parameter:
+                            extra_branch_name = extra_branch_parameter[1]
+                        print('Query extra branch: %s/%s %s ...' % (self.head_user, 'opencv_extra', extra_branch_name))
                         apiClient = self.apiClientExtraBranch
                         extraBranch = apiClient.repos(self.head_user) \
                             ('opencv_extra') \
-                            ('branches')(self.head_branch).get()
+                            ('branches')(extra_branch_name).get()
                         if apiClient.status == 304:
                             print('Pullrequest #%s extra branch is not changed' % (self.prId))
                         elif apiClient.status == 404:
@@ -56,6 +60,8 @@ class Repository():
                             self.extra = False
                         else:
                             self.extra = ('name' in extraBranch)
+                        if self.extra:
+                            self.extra_branch = extra_branch_name
                 except:
                     traceback.print_exc()
                     self.extra = False
@@ -216,7 +222,7 @@ class Repository():
             if self.extra:
                 env['MERGE_EXTRA_PR'] = checkedParameter(self.prIdExtra)
                 env['MERGE_EXTRA_BRANCH'] = checkedParameter(self.info['base']['ref'])
-                env['MERGE_EXTRA_BRANCH_FROM'] = checkedParameter("%s:%s" % (self.head_user, self.head_branch))
+                env['MERGE_EXTRA_BRANCH_FROM'] = checkedParameter("%s:%s" % (self.head_user, self.extra_branch))
                 env['MERGE_EXTRA_AUTHOR'] = checkedParameter(author)
                 env['MERGE_EXTRA_REPO_ABS'] = checkedParameter(self.repo.cfg['extra_path'])
 
