@@ -191,7 +191,7 @@ class Repository():
                             continue
                         if self.head_user == pr['head']['repo']['owner']['login'] and \
                                 'opencv_extra' == pr['head']['repo']['name'] and \
-                                self.head_branch == pr['head']['ref']:
+                                self.extra_branch == pr['head']['ref']:
                             return pr['number']
                     except:
                         print("pr=")
