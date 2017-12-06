@@ -32,6 +32,7 @@ class Repository():
 
         @CacheFunction(30)
         def _isPullRequestApproved(self):
+            warnings = None
             try:
                 apiClient = self.apiClientPullrequest
                 info = apiClient.repos(self.repo.cfg['github']).pulls(self.prId).get()
@@ -42,6 +43,16 @@ class Repository():
                 self.head_user = self.info['head']['repo']['owner']['login']
                 self.head_repo = self.info['head']['repo']['name']
                 self.head_branch = self.info['head']['ref']
+                try:
+                    allowMultipleCommits = False
+                    allowMultipleCommits_param = ParameterExtractor(self.info['body'] or '').extractParameterEx('allow_multiple_commits')
+                    if allowMultipleCommits_param:
+                        allowMultipleCommits = bool(allowMultipleCommits_param[1])
+                        print('Process allow_multiple_commits=%s (%s)' % (allowMultipleCommits_param[1], allowMultipleCommits))
+                    if not allowMultipleCommits and int(info.get('commits', 1)) > 1:
+                        warnings = 'Multiple commits in this PR (allow_multiple_commits=1 to bypass this warning)'
+                except:
+                    traceback.print_exc()
                 try:
                     if self.head_branch in ['master', '2.4']:
                         self.extra = False
@@ -72,10 +83,11 @@ class Repository():
                 if "assignee" in info and info['assignee'] != None:
                     self.assignee = info["assignee"]["login"]
                 if self.assignee is None:
-                    print('Pullrequest #%s is not assigned ...' % self.prId)
+                    warnings = 'Pullrequest #%s is not assigned ...' % self.prId
+                    print(warnings)
                     self.lastApproval = False
                     self.lastApprovalReviews = False
-                    return False
+                    return (False, warnings)
                 # Scan last updated comments
                 apiClient = self.apiClientComments
                 info = apiClient.repos(self.repo.cfg['github']).issues(self.prId).comments.get(sort='updated', direction='desc')
@@ -90,7 +102,7 @@ class Repository():
                                 self.lastApproval = True
                                 break
                 if self.lastApproval:
-                    return True
+                    return (True, warnings)
 
                 apiClient = self.apiClientReviews
                 info = apiClient.repos(self.repo.cfg['github']).pulls(self.prId).reviews.get()
@@ -105,16 +117,17 @@ class Repository():
                                 self.lastApprovalReviews = True
                                 break
                 if self.lastApprovalReviews:
-                    return True
+                    return (True, warnings)
 
-                print('Pullrequest #%s is not approved ...' % self.prId)
-                return False
+                warnings = 'Pullrequest #%s is not approved ...' % self.prId
+                print(warnings)
+                return (False, warnings)
             except:
                 traceback.print_exc()
                 self.info = None
                 self.lastApproval = False
                 self.lastApprovalReviews = False
-                return False
+                return (False, "Internal error")
 
         @CacheFunction(10, initialCleanupThreshold=256)
         def isPullRequestBuildsOK(self, batch):
@@ -174,7 +187,7 @@ class Repository():
                 raise
 
         @CacheFunction(30)
-        def getPullRequestExtraId(self):
+        def getPullRequestExtra(self):
             try:
                 if self.extra is False:
                     return
@@ -192,7 +205,7 @@ class Repository():
                         if self.head_user == pr['head']['repo']['owner']['login'] and \
                                 'opencv_extra' == pr['head']['repo']['name'] and \
                                 self.extra_branch == pr['head']['ref']:
-                            return pr['number']
+                            return pr
                     except:
                         print("pr=")
                         pprint(pr)
@@ -205,22 +218,35 @@ class Repository():
 
 
         def isPullRequestReadyToMerge(self):
+            warnings = []
             status, msg = self.isPullRequestBuildsOK(False)
             if status == True:
-                status = self._isPullRequestApproved()
+                status, msg = self._isPullRequestApproved()
+                if msg:
+                    warnings.append(msg)
                 if status:
-                    prIdExtra = None
+                    prExtra = None
                     if self.extra:
-                        prIdExtra = self.getPullRequestExtraId()
-                        if prIdExtra is None:
+                        prExtra = self.getPullRequestExtra()
+                        if prExtra is None:
                             return (False, 'PR is ready to merge, but PR for "extra" is not created')
                         else:
-                            self.prIdExtra = prIdExtra
-                    return (True, 'Ready to merge (%s)' % (('with "extra" #%s' % prIdExtra) if self.extra else 'without "extra"'))
-                else:
-                    return (False, 'PR is not approved yet')
-            else:
-                return (status, msg)
+                            self.prIdExtra = prExtra['number']
+                            try:
+                                allowMultipleCommits = False
+                                allowMultipleCommits_param = ParameterExtractor(self.info['body'] or '').extractParameterEx('allow_multiple_commits_extra')
+                                if allowMultipleCommits_param:
+                                    allowMultipleCommits = bool(allowMultipleCommits_param[1])
+                                    print('Process allow_multiple_commits=%s (%s)' % (allowMultipleCommits_param[1], allowMultipleCommits))
+                                if not allowMultipleCommits and int(pr.get('commits', 1)) > 1:
+                                    warnings.append('Multiple commits in opencv_extra PR #%s (allow_multiple_commits_extra=1 to bypass this warning)' % self.prIdExtra)
+                            except:
+                                traceback.print_exc()
+                    if len(warnings) > 0:
+                        return (False, ' \n'.join(warnings))
+                    return (True, 'Ready to merge (%s)' % (('with "extra" #%s' % self.prIdExtra) if self.extra else 'without "extra"'))
+
+            return (status, msg)
 
         def configureMergeScriptEnvironment(self, env, author):
             def checkedParameter(v):
