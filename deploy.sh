@@ -39,19 +39,13 @@ ALLOW_STOP=1 # Use Web UI or allow "docker stop <container>"
 
 HTTP_PORT=\${HTTP_PORT:-80}
 
-OPTS="\$DOCKER_OPTS --name \${CONTAINER}"
-
-[[ -z \$CONTAINER_HOSTNAME ]] || OPTS="\$OPTS --hostname \$CONTAINER_HOSTNAME"
-
-add_volume() {
-  OPTS="\$OPTS -v \${P}/\$1:/opt/pullrequest/\$1"
-}
-
-for i in merge-service pullrequest_ui www config.json; do
-  add_volume \$i;
+. docker_utils.sh  # updates OPTS variable
+docker_mount_add credentials/htpasswd /opt/pullrequest/htpasswd ro
+docker_mount_add config.json /opt/pullrequest/config.json ro
+for i in merge-service pullrequest_ui www repositories; do
+  docker_mount_add \$i;
 done
-
-[ ! -f deploy/.prepare_done ] || rm deploy/.prepare_done
+docker_mount_finalize || exit 1
 
 create_container() {
   docker create -it \\
@@ -61,8 +55,6 @@ create_container() {
     -v \${P}/credentials/ssh-git:/opt/pullrequest/.ssh \\
     -v \${P}/logs/merge:/opt/pullrequest/logs \\
     -v \${P}/logs/nginx:/var/log/nginx \\
-    -v \${P}/repositories:/opt/pullrequest/repositories \\
-    -v \${P}/credentials/htpasswd:/opt/pullrequest/htpasswd:ro \
     \${IMAGE}
 }
 EOF
