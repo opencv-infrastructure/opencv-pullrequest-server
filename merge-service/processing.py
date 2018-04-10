@@ -54,7 +54,7 @@ class Repository():
                 except:
                     traceback.print_exc()
                 try:
-                    if self.head_branch in ['master', '2.4']:
+                    if self.head_branch in ['master', '2.4', '3.4']:
                         self.extra = False
                     else:
                         extra_branch_parameter = ParameterExtractor(self.info['body'] or '').extractParameterEx('opencv_extra')
