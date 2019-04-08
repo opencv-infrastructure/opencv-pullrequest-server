@@ -51,6 +51,7 @@ class CacheFunction(object):
                     elif len(self.cache) < self.cleanupThreshold / 2:
                         self.cleanupThreshold = max(self.cleanupThreshold / 2, self.initialCleanupThreshold)
                 value = self.fn(*args)
+                now = time.time()  # update timestamp
                 self.cache[args] = (value, now)
             return value
         return decorator
